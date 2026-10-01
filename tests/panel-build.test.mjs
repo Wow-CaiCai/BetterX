@@ -35,6 +35,13 @@ assert.match(builtHtml, /<section class="BetterX-view BetterX-settings-view"/);
 assert.match(builtHtml, /id="BetterX-download-advanced"/);
 assert.match(builtHtml, /id="BetterX-hide-nfl"[\s\S]*id="BetterX-hideads"/,
   '关闭 NFL 开关应位于关闭广告上方');
+const layoutIndex = builtHtml.indexOf('<summary>界面简化与宽屏</summary>');
+const gridIndex = builtHtml.indexOf('id="BetterX-restore-media-grid"');
+const downloadIndex = builtHtml.indexOf('<summary>下载功能</summary>');
+assert.ok(layoutIndex < gridIndex && gridIndex < downloadIndex,
+  '媒体网格开关应位于界面简化与宽屏栏目');
+assert.equal((builtHtml.match(/id="BetterX-restore-media-grid"/g) || []).length, 1,
+  '媒体网格开关只能出现一次');
 assert.match(builtHtml, /在新打开的窗口里建议勾选上“显示可能含有敏感内容的媒体内容”/,
   '取消年龄限制说明应提示用户检查 X 的敏感内容设置');
 const downloadHistoryIndex = builtHtml.indexOf('id="BetterX-track-downloaded-posts"');

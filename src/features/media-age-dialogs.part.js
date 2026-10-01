@@ -17,20 +17,32 @@
       const items = [...list.children].filter((child) => child.getAttribute('role') === 'presentation');
       const nav = list.closest('nav[role="navigation"]');
       if (!nav) return;
-      nav.classList.remove('BetterX-media-grid', 'BetterX-media-grid-count-2', 'BetterX-media-grid-count-3', 'BetterX-media-grid-count-4');
-      if (nav.parentElement) nav.parentElement.classList.remove('BetterX-media-grid-box');
-      if (items.length < 2) return;
-      nav.classList.add('BetterX-media-grid', `BetterX-media-grid-count-${Math.min(items.length, 4)}`);
-      if (nav.parentElement) nav.parentElement.classList.add('BetterX-media-grid-box');
+      if (items.length < 2) {
+        nav.classList.remove('BetterX-media-grid', 'BetterX-media-grid-count-2', 'BetterX-media-grid-count-3', 'BetterX-media-grid-count-4');
+        if (nav.parentElement) nav.parentElement.classList.remove('BetterX-media-grid-box');
+        return;
+      }
+      const countClass = `BetterX-media-grid-count-${Math.min(items.length, 4)}`;
+      for (const count of [2, 3, 4]) {
+        const name = `BetterX-media-grid-count-${count}`;
+        if (name !== countClass && nav.classList.contains(name)) nav.classList.remove(name);
+      }
+      if (!nav.classList.contains('BetterX-media-grid')) nav.classList.add('BetterX-media-grid');
+      if (!nav.classList.contains(countClass)) nav.classList.add(countClass);
+      if (nav.parentElement && !nav.parentElement.classList.contains('BetterX-media-grid-box')) {
+        nav.parentElement.classList.add('BetterX-media-grid-box');
+      }
     });
   }
 
   function applyMediaGridLayout(scope) {
     if (!state.settings.restoreMediaGrid) {
       removeMediaGridLayout(scope);
+      if (layoutEnhancementsActive()) applyAdaptiveMediaLayout(scope);
       return;
     }
     getArticlesFromScope(scope).forEach(restoreMediaGridInArticle);
+    if (layoutEnhancementsActive()) applyAdaptiveMediaLayout(scope);
   }
 
   // ── 取消年龄限制（用下载能力内联替换遮罩）─────────────

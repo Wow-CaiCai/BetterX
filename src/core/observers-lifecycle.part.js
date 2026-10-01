@@ -50,6 +50,7 @@
         if (state.settings.mediaDownload) injectDownloadButtons(article);
         if (state.settings.restoreMediaGrid) applyMediaGridLayout(article);
         if (state.settings.bypassAgeRestriction) revealAgeRestricted(article);
+        if (layoutEnhancementsActive()) applyAdaptiveMediaLayout(article);
         // 向下滚动时 X 通过虚拟列表异步插入帖子；这里是首屏 scanArticles 之外的增量入口。
         if (state.settings.autoExpandPostText && !deferAutoExpand) expandPostShowMore(article);
       }
@@ -60,6 +61,9 @@
     state.observer = new MutationObserver((mutations) => {
       let hadRemoval = false;
       const immediateAdultArticles = new Set();
+      const immediateLayoutArticles = new Set();
+      const layoutActive = layoutEnhancementsActive();
+      let immediateStructureRefresh = false;
       for (const mutation of mutations) {
         const mutationElement = mutation.target instanceof HTMLElement
           ? mutation.target
@@ -84,6 +88,8 @@
           if (state.settings.hideNfl) sweepNflEntries(node);
           harvestFollowingControlsFromRoot(node);
           pendingRoots.add(node);
+          if (layoutActive || state.settings.restoreMediaGrid) collectArticlesFromRoot(node, immediateLayoutArticles);
+          if (layoutActive && layoutRootAffectsStructure(node)) immediateStructureRefresh = true;
           if (adultSpamFilteringEnabled()) collectArticlesFromRoot(node, immediateAdultArticles);
         }
         if (adultSpamFilteringEnabled() && mutation.addedNodes.length && mutation.target instanceof HTMLElement) {
@@ -94,6 +100,12 @@
           hadRemoval = true;
           for (const node of mutation.removedNodes) unobserveArticleViews(node);
         }
+      }
+      // 在本次绘制前约束新媒体，避免先显示原生大尺寸、100ms 后再缩小；抓帖等工作仍批量延后。
+      if (immediateStructureRefresh) applyLayoutEnhancements();
+      for (const article of immediateLayoutArticles) {
+        if (state.settings.restoreMediaGrid) restoreMediaGridInArticle(article);
+        if (layoutActive) applyAdaptiveMediaLayout(article);
       }
       if (immediateAdultArticles.size) {
         // MutationObserver 在浏览器绘制前执行；立即过滤可避免新黄推先闪现 100ms 再消失。
